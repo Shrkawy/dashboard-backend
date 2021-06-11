@@ -1,6 +1,6 @@
-const express = require("express");
+const { Router } = require("express");
 
-const router = express.Router();
+const router = Router();
 
 const {
   getAllProducts,
@@ -10,19 +10,16 @@ const {
   updateProduct,
 } = require("../controllers/products-controllers");
 
-const {
-  productValidation,
-  updateProductValidation,
-} = require("../middlewares/validators");
+const { productValidators } = require("../middlewares/validators");
 
 router.get("/", getAllProducts);
 
-router.post("/new-product", productValidation, createProduct);
+router.post("/new-product", productValidators.create, createProduct);
 
 router.get("/:productId", getProductbyId);
 
 router.delete("/:productId", deleteProduct);
 
-router.patch("/:productId", updateProductValidation, updateProduct);
+router.patch("/:productId", productValidators.update, updateProduct);
 
 module.exports = router;

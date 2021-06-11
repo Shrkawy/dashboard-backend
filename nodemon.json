@@ -1,5 +1,6 @@
 {
     "env": {
+        "SECRET_KEY": "cRU`&qjSiNGz{EdZ|dKdtSHzGMXq+6",
         "PORT": 8080,
         "DB_USER": "sharkawy",
         "DB_PASSWORD": "ph20GLgMIBR4u9Y3",

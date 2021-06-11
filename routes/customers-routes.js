@@ -1,6 +1,6 @@
-const express = require("express");
+const { Router } = require("express");
 
-const router = express.Router();
+const router = Router();
 
 const {
   getAllCustomers,
@@ -10,19 +10,16 @@ const {
   updateCustomer,
 } = require("../controllers/customers-controllers");
 
-const {
-  customerValidation,
-  updateCustomerValidation,
-} = require("../middlewares/validators");
+const { customerValidators } = require("../middlewares/validators");
 
 router.get("/", getAllCustomers);
 
-router.post("/new-customer", customerValidation, createCustomer);
+router.post("/new-customer", customerValidators.create, createCustomer);
 
 router.get("/:customerId", getCustomerById);
 
 router.delete("/:customerId", deleteCustomer);
 
-router.patch("/:customerId", updateCustomerValidation, updateCustomer);
+router.patch("/:customerId", customerValidators.update, updateCustomer);
 
 module.exports = router;

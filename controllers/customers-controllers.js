@@ -1,103 +1,31 @@
-const mongoose = require("mongoose");
 const Customer = require("../models/customer");
-const HttpError = require("../middlewares/http-error");
-const { validationResult } = require("express-validator");
+const {
+  find,
+  findById,
+  deleteOne,
+  update,
+  createOne,
+} = require("../utils/database");
+const { validationResult } = require("../utils/validation");
 
 exports.getAllCustomers = async (req, res, next) => {
-  let customers;
-
-  try {
-    customers = await Customer.find();
-  } catch (err) {
-    const error = new HttpError(
-      "somthing went wrong, please try again later",
-      500
-    );
-    return next(error);
-  }
-
-  if (!customers || customers.length === 0)
-    return res.status(202).json("no customers found");
+  const customers = await find(Customer, res, next);
 
   return res.status(200).json(customers);
 };
 
 exports.getCustomerById = async (req, res, next) => {
-  const customerId = req.params.customerId;
+  const id = req.params.customerId;
 
-  if (!mongoose.isValidObjectId(customerId))
-    return res.status(422).json("could not find this customer");
-
-  let customer;
-
-  try {
-    customer = await Customer.findById(customerId);
-  } catch (err) {
-    console.log(err);
-    const error = new HttpError(
-      "somthing went wrong, please try again later",
-      500
-    );
-    return next(error);
-  }
-
-  if (!customer) return res.status(202).json("could not find this customer");
+  const customer = await findById(id, Customer, res, next);
 
   return res.status(200).json(customer);
 };
 
 exports.createCustomer = async (req, res, next) => {
-  const errors = validationResult(req);
+  validationResult(req, res);
 
-  if (!errors.isEmpty()) return res.status(422).json(errors.mapped());
-
-  const {
-    registerDate,
-    firstName,
-    lastName,
-    birthDate,
-    country,
-    state,
-    city,
-    address1,
-    address2,
-    zipCode,
-    email,
-    phone,
-    cridetCard,
-    activity,
-  } = req.body;
-
-  const createdCustomer = new Customer({
-    registerDate,
-    firstName,
-    lastName,
-    birthDate,
-    country,
-    country,
-    state,
-    city,
-    address1,
-    address2,
-    zipCode,
-    email,
-    phone,
-    cridetCard,
-    activity,
-  });
-
-  try {
-    const sess = await mongoose.startSession();
-    sess.startTransaction();
-    createdCustomer.save({ session: sess });
-    sess.commitTransaction();
-  } catch (err) {
-    const error = new HttpError(
-      "somthing went wrong, please try again later",
-      500
-    );
-    return next(error);
-  }
+  let createdCustomer = await createOne(req, next, Customer);
 
   return res.status(201).json(createdCustomer);
 };
@@ -105,71 +33,21 @@ exports.createCustomer = async (req, res, next) => {
 exports.deleteCustomer = async (req, res, next) => {
   const id = req.params.customerId;
 
-  if (!mongoose.isValidObjectId(id))
-    return res.status(422).json("could not find this customer");
-
-  let customer;
-
-  try {
-    customer = await Customer.findByIdAndDelete(id);
-  } catch (err) {
-    console.log(err);
-    const error = new HttpError(
-      "somthing went wrong, please try again later",
-      500
-    );
-    return next(error);
-  }
-
-  if (!customer) return res.status(202).json("could not find this customer");
+  await findById(id, Customer, next);
+  await deleteOne(id, Customer, next);
 
   return res.status(200).json("deleted");
 };
 
 exports.updateCustomer = async (req, res, next) => {
+  validationResult(req, res);
+
   const id = req.params.customerId;
+  const modifications = req.body;
 
-  if (!mongoose.isValidObjectId(id))
-    return res.status(422).json("no customer found");
+  let customer = await findById(id, Customer, next);
 
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty() || Object.keys(req.body).length === 0) {
-    return res
-      .status(422)
-      .json(
-        errors.isEmpty()
-          ? "you can not update this customer with no changes"
-          : errors.mapped()
-      );
-  }
-
-  let customer;
-
-  try {
-    customer = await Customer.findById(id);
-  } catch (err) {
-    return next(new HttpError("somthing went wrong, please try again later!"));
-  }
-
-  if (!customer) return res.status(202).json("no customer to be updated");
-
-  const modCustomer = req.body;
-  modCustomer.lastModified = new Date().toISOString();
-
-  for (const [key, value] of Object.entries(modCustomer)) {
-    customer[key] = value;
-  }
-
-  try {
-    customer = await customer.save();
-  } catch (err) {
-    const error = new HttpError(
-      "something went wrong, please try again later.",
-      500
-    );
-    return next(error);
-  }
+  customer = await update(customer, modifications, next);
 
   return res.status(200).json(customer);
 };

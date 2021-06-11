@@ -1,47 +1,58 @@
 const express = require("express");
-const path = require("path");
-const createError = require("http-errors");
 const logger = require("morgan");
 const cors = require("cors");
-const mongoose = require("mongoose");
+const { join } = require("path");
+const { connect } = require("mongoose");
+const { success, error, ready } = require("consola");
 
-const customersRoutes = require("./routes/customers-routes");
-const productsRoutes = require("./routes/products-routes");
-const usersRoutes = require("./routes/users-routes");
-const ordersRoutes = require("./routes/orders-routs");
-const HttpError = require("./middlewares/http-error");
-
+// init app
 const app = express();
 
+// middlewares
 app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(join(__dirname, "public")));
 
-app.use("/api/customers", customersRoutes);
-app.use("/api/products", productsRoutes);
-app.use("/api/users", usersRoutes);
-app.use("/api/orders", ordersRoutes);
+// end-points
+app.use("/api/customers", require("./routes/customers-routes"));
+app.use("/api/products", require("./routes/products-routes"));
+app.use("/api/users", require("./routes/users-routes"));
+app.use("/api/orders", require("./routes/orders-routes"));
 
+// 404 error handler
 app.use((req, res, next) => {
-  res.status(404).send("page not found");
+  res.sendStatus(404);
 });
 
-const port = 8080;
+const startApp = async () => {
+  const PORT = process.env.PORT || 8080;
+  const DB = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.5jwjv.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
-// app.listen(process.env.PORT || port, () => {
-//   console.log(`your server running on port: ${port}`);
-// });
-
-mongoose
-  .connect(
-    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.5jwjv.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`,
-    { useNewUrlParser: true }
-  )
-  .then(() => {
-    app.listen(process.env.PORT || port, () => {
-      console.log(`your server running on port: ${port}`);
+  try {
+    // Start connection with DB
+    await connect(DB, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useFindAndModify: true,
     });
-  })
-  .catch((err) => console.log(err));
+
+    success({
+      message: "connected to database successfully",
+      badge: true,
+    });
+
+    // Start listening for the server on PORT
+    app.listen(PORT, () =>
+      ready({ message: `your server running on port: ${PORT}` })
+    );
+  } catch (err) {
+    error({
+      message: "failed to connect with database",
+      badge: true,
+    });
+  }
+};
+
+startApp();
