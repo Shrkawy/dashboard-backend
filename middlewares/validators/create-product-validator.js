@@ -39,7 +39,4 @@ module.exports = checkSchema({
       options: (value) => value.length > 0,
     },
   },
-  creator: {
-    exists: true,
-  },
 });

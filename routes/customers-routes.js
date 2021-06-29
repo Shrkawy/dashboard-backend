@@ -9,17 +9,40 @@ const {
   deleteCustomer,
   updateCustomer,
 } = require("../controllers/customers-controllers");
+const auth = require("../middlewares/auth");
 
-const { customerValidators } = require("../middlewares/validators");
+const { customerValidators, isValid } = require("../middlewares/validators");
+const customer = require("../models/customer");
 
 router.get("/", getAllCustomers);
 
-router.post("/new-customer", customerValidators.create, createCustomer);
+router.post(
+  "/new-customer",
+  auth(["user"]),
+  customerValidators.create,
+  createCustomer
+);
 
-router.get("/:customerId", getCustomerById);
+router.get(
+  "/:id",
+  auth(["item", "user"], customer),
+  isValid.id,
+  getCustomerById
+);
 
-router.delete("/:customerId", deleteCustomer);
+router.delete(
+  "/:id",
+  auth(["item", "user"], customer),
+  isValid.id,
+  deleteCustomer
+);
 
-router.patch("/:customerId", customerValidators.update, updateCustomer);
+router.patch(
+  "/:id",
+  auth(["item", "user"], customer),
+  isValid.id,
+  customerValidators.update,
+  updateCustomer
+);
 
 module.exports = router;

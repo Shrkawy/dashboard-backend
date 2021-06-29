@@ -1,24 +1,29 @@
 const HttpError = require("../../middlewares/http-error");
 
 /**
- * @description create new document in database.
+ * Create new document in database.
  * @param req from middleware
  * @param next from middleware
  * @param Model Shcema Model
+ *
+ * @returns created document
  */
 
 module.exports = async (req, next, Model) => {
   const createdDocument = new Model(req.body);
 
+  let responce;
+
   try {
-    await createdDocument.save();
+    responce = await createdDocument.save();
   } catch (err) {
+    console.log(err);
     const error = new HttpError(
-      "failed to create order, please try again later",
+      "something went wrong, please try again later",
       500
     );
     return next(error);
   }
 
-  return createdDocument;
+  return responce;
 };

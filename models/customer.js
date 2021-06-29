@@ -47,9 +47,7 @@ const customerSchema = new Schema(
       required: true,
     },
     cridetCard: { type: Object, required: false },
-    activity: { type: Object, required: false },
-    // orders
-    // user
+    user: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

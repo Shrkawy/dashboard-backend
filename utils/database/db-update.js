@@ -1,11 +1,13 @@
 const HttpError = require("../../middlewares/http-error");
 
 /**
- * @description this function update a document in database. if not updated it returns an error.
+ * Update a document in database.
  *
  * @param document that will update
  * @param {Object} modifications that will apply to original document in database
  * @param next from middleware
+ * 
+ * @returns updated document or error
  */
 
 module.exports = async (document, modifications, next) => {

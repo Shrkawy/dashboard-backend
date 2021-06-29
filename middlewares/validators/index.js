@@ -15,4 +15,7 @@ module.exports = {
     create: require("./create-order-validator"),
     update: require("./update-order-validator"),
   },
+  isValid: {
+    id: require("./isValidId"),
+  },
 };

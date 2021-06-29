@@ -1,7 +1,13 @@
+const find = require("./db-find");
+const findById = require("./db-findById");
+const deleteOne = require("./db-delete");
+const updateOne = require("./db-update");
+const createOne = require("./db-createOne");
+
 module.exports = {
-  find: require("./db-find"),
-  findById: require("./db-findById"),
-  deleteOne: require("./db-delete"),
-  updateOne: require("./db-update"),
-  createOne: require("./db-createOne"),
+  find,
+  findById,
+  deleteOne,
+  updateOne,
+  createOne,
 };

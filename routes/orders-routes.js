@@ -10,16 +10,30 @@ const {
   updateOrder,
 } = require("../controllers/orders-controllers");
 
-const { orderValidators } = require("../middlewares/validators");
+const { orderValidators, isValid } = require("../middlewares/validators");
 
-router.get("/", getAllOrders);
+const auth = require("../middlewares/auth");
+const order = require("../models/order");
 
-router.post("/new-order", orderValidators.create, createOrder);
+router.get("/",auth(['user']), getAllOrders);
 
-router.get("/:orderId", getOdrerById);
+router.post(
+  "/new-order",
+  auth(["user"]),
+  orderValidators.create,
+  createOrder
+);
 
-router.delete("/:orderId", deleteOrder);
+router.get("/:id", auth(["item"], order), isValid.id, getOdrerById);
 
-router.patch("/:orderId", orderValidators.update, updateOrder);
+router.delete("/:id", auth(["item"], order), isValid.id, deleteOrder);
+
+router.patch(
+  "/:id",
+  auth(["item"], order),
+  isValid.id,
+  orderValidators.update,
+  updateOrder
+);
 
 module.exports = router;

@@ -9,15 +9,19 @@ const {
 const { validationResult } = require("../utils/validation");
 
 exports.getAllOrders = async (req, res, next) => {
-  const orders = await find(Order, res, next);
+  const orders = await find(Order, next);
+
+  if (!orders || orders.length === 0) return res.status(202).json(`not found`);
 
   return res.status(200).json(orders);
 };
 
 exports.getOdrerById = async (req, res, next) => {
-  const id = req.params.orderId;
+  const id = req.params.id;
 
-  const order = await findById(id, Order, res, next);
+  const order = await findById(id, Order, next);
+
+  if (!order) return res.status(202).json("not found!");
 
   return res.status(200).json(order);
 };
@@ -25,15 +29,29 @@ exports.getOdrerById = async (req, res, next) => {
 exports.createOrder = async (req, res, next) => {
   validationResult(req, res);
 
-  let createdOrder = await createOne(req, next, Order);
+  let createdOrder = new Order(req.body);
 
-  return res.status(201).json(createdOrder);
+  req.customer
+    ? (createdOrder.customer = req.customer)
+    : (createdOrder.user = req.user);
+
+  let order;
+  try {
+    order = await createdOrder.save();
+  } catch (err) {
+    res.status(500).json("something went wrong, pleasse try again later");
+  }
+  
+  return res.status(201).json(order);
 };
 
 exports.deleteOrder = async (req, res, next) => {
-  const id = req.params.orderId;
+  const id = req.params.id;
 
-  await findById(id, Order, res, next);
+  const order = await findById(id, Order, next);
+
+  if (!order) return res.status(202).json("not found");
+
   await deleteOne(id, Order, next);
 
   return res.status(200).json("deleted");
@@ -41,11 +59,14 @@ exports.deleteOrder = async (req, res, next) => {
 
 exports.updateOrder = async (req, res, next) => {
   validationResult(req, res);
-  const id = req.params.orderId;
+
+  const id = req.params.id;
 
   const modifications = req.body;
 
   let order = await findById(id, Order, next);
+
+  if (!order) return res.status(202).json("not found");
 
   order = await updateOne(order, modifications, next);
 

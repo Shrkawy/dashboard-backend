@@ -4,22 +4,35 @@ const router = Router();
 
 const {
   getAllProducts,
-  getProductbyId,
+  getProductById,
   createProduct,
   deleteProduct,
   updateProduct,
 } = require("../controllers/products-controllers");
 
-const { productValidators } = require("../middlewares/validators");
+const auth = require("../middlewares/auth");
+const Product = require("../models/product");
+
+const { productValidators, isValid } = require("../middlewares/validators");
 
 router.get("/", getAllProducts);
 
-router.post("/new-product", productValidators.create, createProduct);
+router.post(
+  "/new-product",
+  auth(["user", Product]),
+  productValidators.create,
+  createProduct
+);
 
-router.get("/:productId", getProductbyId);
+router.get("/:id", auth(["item"], Product), getProductById);
 
-router.delete("/:productId", deleteProduct);
+router.delete("/:id", auth(["item"], Product), deleteProduct);
 
-router.patch("/:productId", productValidators.update, updateProduct);
+router.patch(
+  "/:id",
+  auth(["item"], Product),
+  productValidators.update,
+  updateProduct
+);
 
 module.exports = router;

@@ -20,7 +20,4 @@ module.exports = checkSchema({
     isString: true,
     trim: true,
   },
-  customer: {
-    exists: true,
-  },
 });

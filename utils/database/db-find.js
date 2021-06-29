@@ -1,15 +1,16 @@
 const HttpError = require("../../middlewares/http-error");
 
 /**
- * @description this function returns a database collection. if not founds it returns not found status.
+ *  Returns a database collection.
+ * @async
  *
  * @param model the Shcema used to search in db
  * @param next from middleware
- * @param {Promise} res from middleware
- * @returns {Promise} database collection
+ *
+ * @returns {Promise} database collection or not found message.
  */
 
-module.exports = async (model, res, next) => {
+module.exports = async (model, next) => {
   let collection;
 
   try {
@@ -21,9 +22,6 @@ module.exports = async (model, res, next) => {
     );
     return next(error);
   }
-
-  if (!collection || collection.length === 0)
-    return res.status(202).json(`not found`);
 
   return collection;
 };

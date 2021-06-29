@@ -1,29 +1,16 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { startSession } = require("mongoose");
 
 const HttpError = require("../middlewares/http-error");
 const User = require("../models/user");
+const Role = require("../models/role");
 const { validationResult } = require("../utils/validation");
 
 exports.signup = async (req, res, next) => {
   validationResult(req, res);
 
-  const {
-    username,
-    password,
-    firstName,
-    lastName,
-    gender,
-    birthDate,
-    email,
-    phone,
-    store,
-    currency,
-    country,
-    city,
-    address,
-    zipCode,
-  } = req.body;
+  const { username, password, email } = req.body;
 
   let existedEmail;
   let existedUserName;
@@ -36,6 +23,7 @@ exports.signup = async (req, res, next) => {
       "something went wrong, please try again later",
       500
     );
+    return next(error);
   }
 
   if (existedEmail || existedUserName)
@@ -52,27 +40,24 @@ exports.signup = async (req, res, next) => {
       "something went wrong, please try again later",
       500
     );
+    return next(error);
   }
 
-  const createdUser = new User({
-    username,
-    password: hashedPassword,
-    firstName,
-    lastName,
-    gender,
-    birthDate,
-    email,
-    phone,
-    store,
-    currency,
-    country,
-    city,
-    address,
-    zipCode,
+  const createdUser = new User(req.body);
+  createdUser.password = hashedPassword;
+
+  const userRole = new Role({
+    userId: createdUser._id,
+    userType: "user",
+    globalPerms: true,
   });
 
   try {
-    await createdUser.save();
+    const session = await startSession();
+    session.startTransaction();
+    await createdUser.save({ session });
+    await userRole.save({ session });
+    session.commitTransaction();
   } catch (err) {
     const error = new HttpError(
       "something went wrong, please try again later",
@@ -88,10 +73,12 @@ exports.signup = async (req, res, next) => {
       {
         userId: createdUser.id,
         email: createdUser.email,
+        username: createdUser.username,
+        role: userRole.id,
       },
       process.env.SECRET_KEY,
       {
-        expiresIn: "1hr",
+        expiresIn: "1 day",
       }
     );
   } catch (err) {
@@ -138,17 +125,26 @@ exports.login = async (req, res, next) => {
 
   if (!isValidPassword) res.status(401).json("username or password wrong!");
 
-  let token;
+  let token, role;
+
+  try {
+    role = await Role.findOne({ userId: user.id });
+  } catch (err) {
+    return res.status(500);
+  }
+
+  if (!role) return res.status(202).json("not found");
 
   try {
     token = jwt.sign(
       {
         userId: user.id,
         email: user.email,
+        role: role.id,
       },
       process.env.SECRET_KEY,
       {
-        expiresIn: "1hr",
+        expiresIn: "1 day",
       }
     );
   } catch (err) {

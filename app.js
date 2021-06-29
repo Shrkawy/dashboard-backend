@@ -1,14 +1,16 @@
-const express = require("express");
-const logger = require("morgan");
-const cors = require("cors");
-const { join } = require("path");
-const { connect } = require("mongoose");
-const { success, error, ready } = require("consola");
+const express = require("express"),
+  logger = require("morgan"),
+  cors = require("cors"),
+  passport = require("passport"),
+  { join } = require("path"),
+  { connect } = require("mongoose"),
+  { success, error, ready } = require("consola");
+
 
 // init app
 const app = express();
 
-// middlewares
+// middlewares configs
 app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
@@ -26,13 +28,14 @@ app.use((req, res, next) => {
   res.sendStatus(404);
 });
 
-const startApp = async () => {
-  const PORT = process.env.PORT || 8080;
-  const DB = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.5jwjv.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
+const PORT = process.env.PORT || 8080;
+const { DB_USER: user, DB_PASSWORD: pass, DB_NAME: name } = process.env;
+const DB_URL = `mongodb+srv://${user}:${pass}@cluster0.5jwjv.mongodb.net/${name}?retryWrites=true&w=majority`;
 
+const startApp = async () => {
   try {
     // Start connection with DB
-    await connect(DB, {
+    await connect(DB_URL, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useFindAndModify: true,
