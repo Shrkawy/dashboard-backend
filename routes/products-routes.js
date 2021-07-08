@@ -1,6 +1,7 @@
 const { Router } = require("express");
+const passport = require("passport");
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 const {
   getAllProducts,
@@ -10,27 +11,30 @@ const {
   updateProduct,
 } = require("../controllers/products-controllers");
 
+const { productValidators } = require("../middlewares/validators");
 const auth = require("../middlewares/auth");
-const Product = require("../models/product");
 
-const { productValidators, isValid } = require("../middlewares/validators");
+const passportAuth = passport.authenticate("jwt", { session: false }),
+  itemType = "product";
 
 router.get("/", getAllProducts);
 
 router.post(
-  "/new-product",
-  auth(["user", Product]),
+  "/",
+  passportAuth,
+  auth(["user"]),
   productValidators.create,
   createProduct
 );
 
-router.get("/:id", auth(["item"], Product), getProductById);
+router.get("/:productId", getProductById);
 
-router.delete("/:id", auth(["item"], Product), deleteProduct);
+router.delete("/:productId", passportAuth, auth(["user"]), deleteProduct);
 
 router.patch(
-  "/:id",
-  auth(["item"], Product),
+  "/:productId",
+  passportAuth,
+  auth(["user"]),
   productValidators.update,
   updateProduct
 );

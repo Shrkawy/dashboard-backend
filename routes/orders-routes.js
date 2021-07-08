@@ -1,6 +1,7 @@
 const { Router } = require("express");
+const passport = require("passport");
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 const {
   getAllOrders,
@@ -10,30 +11,18 @@ const {
   updateOrder,
 } = require("../controllers/orders-controllers");
 
-const { orderValidators, isValid } = require("../middlewares/validators");
+const { orderValidators } = require("../middlewares/validators");
 
-const auth = require("../middlewares/auth");
-const order = require("../models/order");
+const passportAuth = passport.authenticate("jwt", { session: false });
 
-router.get("/",auth(['user']), getAllOrders);
+router.get("/", passportAuth, getAllOrders);
 
-router.post(
-  "/new-order",
-  auth(["user"]),
-  orderValidators.create,
-  createOrder
-);
+router.post("/", passportAuth, orderValidators.create, createOrder);
 
-router.get("/:id", auth(["item"], order), isValid.id, getOdrerById);
+router.get("/:orderId", passportAuth, getOdrerById);
 
-router.delete("/:id", auth(["item"], order), isValid.id, deleteOrder);
+router.delete("/:orderId", passportAuth, deleteOrder);
 
-router.patch(
-  "/:id",
-  auth(["item"], order),
-  isValid.id,
-  orderValidators.update,
-  updateOrder
-);
+router.patch("/:orderId", passportAuth, orderValidators.update, updateOrder);
 
 module.exports = router;

@@ -2,6 +2,7 @@ const { checkSchema } = require("express-validator");
 
 module.exports = checkSchema({
     firstName: {
+      
       optional: { options: { nullable: true } },
       trim: true,
       errorMessage: "must provide your first name",
@@ -55,4 +56,5 @@ module.exports = checkSchema({
       },
       errorMessage: "Not valid phone number",
     },
+
   });

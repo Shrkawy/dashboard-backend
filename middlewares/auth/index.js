@@ -1,78 +1,97 @@
-const { verify } = require("jsonwebtoken");
-const Role = require("../../models/role");
-const HttpError = require("../http-error");
-
-const { itemAuth, userAuth } = require("./auth-controllers");
-
 /**
- * authenticate user token and role
- * @param {Array} restrict user role.
- * @param itemSchema database Schema.
+ * authenticate user role
+ * @param {Object} restrict user role.
  */
 
-module.exports = (restrict, itemSchema) => {
+module.exports = function (restrict) {
   return async (req, res, next) => {
-    // check token
-    if (!req.headers.authorization) return res.status(401).json("not allowed");
+    // get user role
+    const role = req.role;
+    if (!role)
+      return res.status(403).json({
+        message: "you are niot allowed!",
+        success: false,
+      });
 
-    const token = req.headers.authorization.split(" ")[1];
-    if (!token) next(new HttpError("not allowed", 401));
+    // check if user is admin
+    if (req.requister === "user" && role.globalPerms) {
+      // delete or patch item? check if this user created the item
+      if (restrict.itemType) {
+        const item = await getItemFromDB(restrict.itemType, req.params);
 
-    const decodedToken = verify(token, process.env.SECRET_KEY, (err) => {});
+        if (item.user.toString() !== role.userId.toString())
+          return res
+            .status(403)
+            .json({ message: "you are not allowed", success: false });
 
-    if (!decodedToken) {
-      return res.status(401).json({ message: "please login", success: false });
-    }
-
-    const { userId, role } = decodedToken;
-
-    // get user ROLE
-    let userRole;
-    try {
-      userRole = await Role.findById(role);
-    } catch (err) {
-      next(new HttpError("something went wrong!", 500));
-    }
-
-    // no role found or id in role not equal to id in token
-    if (!userRole || userRole.userId != decodedToken.userId) {
-      return next(new HttpError("not allowed", 403));
-    }
-
-    if (restrict.includes("item")) {
-      const itemId = req.params.id;
-      if (!itemId) return res.status(202).json("not found");
-
-      // get item from DB
-      let item;
-      try {
-        item = await itemSchema.findById(itemId);
-      } catch (err) {
-        return res
-          .status(500)
-          .json("something went wrong, please try again later");
-      }
-
-      if (!item) return res.status(202).json("not found");
-
-      if (itemAuth(item, userRole, userId, itemId)) {
-        req.userId = userId;
-        req.item = itemId;
         return next();
       }
 
-      return next(new HttpError("not allowed", 403));
+      // next if the user want to create item
+      return next();
     }
 
-    if (restrict.includes("user")) {
-      if (userAuth(userId, userRole)) {
-        if (userRole.userType === "customer") req.customer = userId;
-        if (userRole.userType === "user") req.user = userId;
+    // check if user is customer (has access to create delete or update orders only!)
+    if (role.privatePerms) {
+      // check if this customer created the order
+      if (restrict.itemType) {
+        const item = await getItemFromDB(restrict.itemType);
+        if (!item)
+          return res.status(202).json({ success: false, message: "not found" });
+        console.log(item);
+
+        if (item.customer.toString() !== role.userId.toString())
+          return res
+            .status(403)
+            .json({ message: "you are not allowed", success: false });
+
         return next();
       }
-      return next(new HttpError("not allowed"), 403);
-    }
 
-    return next(new HttpError("authenticaion failed", 403));
+      return next();
+    }
+    return res
+      .status(401)
+      .json({ message: "you are not allowed", success: false });
   };
 };
+
+async function getItemFromDB(itemType, params) {
+  let item;
+  try {
+    const { id, Schema } = getItemIdAndSchema(itemType);
+    console.log(id);
+    item = await Schema.findById(id);
+  } catch (err) {
+    return;
+  }
+
+  function getItemIdAndSchema(itemType) {
+    let result;
+    if (itemType === "product") {
+      const Schema = require("../../models/product");
+      return (result = {
+        Schema,
+        id: params.productId,
+      });
+    }
+
+    if (itemType === "customer") {
+      const Schema = require("../../models/product");
+      return (result = {
+        Schema,
+        id: params.productId,
+      });
+    }
+
+    if (itemType === "order") {
+      const Schema = require("../../models/order");
+      return (result = {
+        Schema,
+        id: params.productId,
+      });
+    }
+
+    return result;
+  }
+}

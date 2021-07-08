@@ -1,6 +1,7 @@
 const { Router } = require("express");
+const passport = require("passport");
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 const {
   getAllCustomers,
@@ -9,38 +10,33 @@ const {
   deleteCustomer,
   updateCustomer,
 } = require("../controllers/customers-controllers");
+
 const auth = require("../middlewares/auth");
 
-const { customerValidators, isValid } = require("../middlewares/validators");
-const customer = require("../models/customer");
+const { customerValidators } = require("../middlewares/validators");
 
-router.get("/", getAllCustomers);
+const passportAuth = passport.authenticate("jwt", { session: false });
 
-router.post(
-  "/new-customer",
-  auth(["user"]),
-  customerValidators.create,
-  createCustomer
-);
+router.get("/", passportAuth, getAllCustomers);
+
+router.post("/", passportAuth, customerValidators.create, createCustomer);
 
 router.get(
-  "/:id",
-  auth(["item", "user"], customer),
-  isValid.id,
+  "/:customerId",
+  passportAuth,
+  auth({ itemType: "customer" }),
   getCustomerById
 );
 
 router.delete(
-  "/:id",
-  auth(["item", "user"], customer),
-  isValid.id,
+  "/:customerId",
+  passportAuth,
   deleteCustomer
 );
 
 router.patch(
-  "/:id",
-  auth(["item", "user"], customer),
-  isValid.id,
+  "/:customerId",
+  passportAuth,
   customerValidators.update,
   updateCustomer
 );

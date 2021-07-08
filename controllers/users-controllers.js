@@ -1,11 +1,11 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const { startSession } = require("mongoose");
 
 const HttpError = require("../middlewares/http-error");
 const User = require("../models/user");
 const Role = require("../models/role");
 const { validationResult } = require("../utils/validation");
+const { issueJWT } = require("../utils/jwt");
 
 exports.signup = async (req, res, next) => {
   validationResult(req, res);
@@ -48,7 +48,7 @@ exports.signup = async (req, res, next) => {
 
   const userRole = new Role({
     userId: createdUser._id,
-    userType: "user",
+    userType: "super-admin",
     globalPerms: true,
   });
 
@@ -66,29 +66,10 @@ exports.signup = async (req, res, next) => {
     return next(error);
   }
 
-  let token;
+  const token = issueJWT(createdUser, userRole);
 
-  try {
-    token = jwt.sign(
-      {
-        userId: createdUser.id,
-        email: createdUser.email,
-        username: createdUser.username,
-        role: userRole.id,
-      },
-      process.env.SECRET_KEY,
-      {
-        expiresIn: "1 day",
-      }
-    );
-  } catch (err) {
-    console.log(err);
-    const error = new HttpError(
-      "something went wrong, please try again later",
-      500
-    );
-    return next(error);
-  }
+  if (!token) return res.sendStatus(500);
+
   return res
     .status(201)
     .json({ id: createdUser.id, email: createdUser.email, token });
@@ -125,35 +106,20 @@ exports.login = async (req, res, next) => {
 
   if (!isValidPassword) res.status(401).json("username or password wrong!");
 
-  let token, role;
+  let role;
 
   try {
-    role = await Role.findOne({ userId: user.id });
+    role = await Role.findOne({ userId: user._id });
   } catch (err) {
     return res.status(500);
   }
 
-  if (!role) return res.status(202).json("not found");
+  if (!role)
+    return res.status(202).json({ message: "no user found", success: false });
 
-  try {
-    token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: role.id,
-      },
-      process.env.SECRET_KEY,
-      {
-        expiresIn: "1 day",
-      }
-    );
-  } catch (err) {
-    const error = new HttpError(
-      "something went wrong, please try again later.",
-      500
-    );
-    return next(error);
-  }
+  const token = issueJWT(user, role);
+
+  if (!token) return res.sendStatus(500);
 
   return res.status(200).json({ id: user.id, email: user.email, token });
 };

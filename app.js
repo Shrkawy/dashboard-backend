@@ -6,6 +6,8 @@ const express = require("express"),
   { connect } = require("mongoose"),
   { success, error, ready } = require("consola");
 
+// config passport
+require("./config/passport")(passport);
 
 // init app
 const app = express();
@@ -16,12 +18,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(join(__dirname, "public")));
+app.use(passport.initialize());
 
 // end-points
-app.use("/api/customers", require("./routes/customers-routes"));
-app.use("/api/products", require("./routes/products-routes"));
-app.use("/api/users", require("./routes/users-routes"));
-app.use("/api/orders", require("./routes/orders-routes"));
+app.use("/api/", require("./routes/users-routes"));
+app.use("/api/:userId/products", require("./routes/products-routes"));
+app.use("/api/:userId/customers", require("./routes/customers-routes"));
+app.use("/api/:userId/:customerId/orders", require("./routes/orders-routes"));
 
 // 404 error handler
 app.use((req, res, next) => {
@@ -38,7 +41,7 @@ const startApp = async () => {
     await connect(DB_URL, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      useFindAndModify: true,
+      useFindAndModify: false,
     });
 
     success({
