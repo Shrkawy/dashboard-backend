@@ -2,9 +2,7 @@ const express = require("express"),
   logger = require("morgan"),
   cors = require("cors"),
   passport = require("passport"),
-  { join } = require("path"),
-  { connect } = require("mongoose"),
-  { success, error, ready } = require("consola");
+  { join } = require("path");
 
 // config passport
 require("./config/passport")(passport);
@@ -28,37 +26,8 @@ app.use("/api/:userId/:customerId/orders", require("./routes/orders-routes"));
 
 // 404 error handler
 app.use((req, res, next) => {
-  res.sendStatus(404);
+  return res.sendStatus(404);
 });
 
-const PORT = process.env.PORT || 8080;
-const { DB_USER: user, DB_PASSWORD: pass, DB_NAME: name } = process.env;
-const DB_URL = `mongodb+srv://${user}:${pass}@cluster0.5jwjv.mongodb.net/${name}?retryWrites=true&w=majority`;
-
-const startApp = async () => {
-  try {
-    // Start connection with DB
-    await connect(DB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useFindAndModify: false,
-    });
-
-    success({
-      message: "connected to database successfully",
-      badge: true,
-    });
-
-    // Start listening for the server on PORT
-    app.listen(PORT, () =>
-      ready({ message: `your server running on port: ${PORT}` })
-    );
-  } catch (err) {
-    error({
-      message: "failed to connect with database",
-      badge: true,
-    });
-  }
-};
-
-startApp();
+// connect to MongoDB and start listening on port 8080
+require("./config/start-server")(app);

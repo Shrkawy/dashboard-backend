@@ -17,7 +17,9 @@ const userStrategy = new JwtStratigy(options, async (req, token, done) => {
     return done(err, false);
   }
 
-  if (role) req.role = role;
+  if (!role) return done("user not found", false);
+
+  req.role = role;
 
   if (role.userType === "super-admin") {
     const User = require("../models/user");

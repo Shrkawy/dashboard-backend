@@ -19,22 +19,16 @@ const passportAuth = passport.authenticate("jwt", { session: false }),
 
 router.get("/", getAllProducts);
 
-router.post(
-  "/",
-  passportAuth,
-  auth(["user"]),
-  productValidators.create,
-  createProduct
-);
+router.post("/", passportAuth, auth(), productValidators.create, createProduct);
 
 router.get("/:productId", getProductById);
 
-router.delete("/:productId", passportAuth, auth(["user"]), deleteProduct);
+router.delete("/:productId", passportAuth, auth({ itemType }), deleteProduct);
 
 router.patch(
   "/:productId",
   passportAuth,
-  auth(["user"]),
+  auth({ itemType }),
   productValidators.update,
   updateProduct
 );

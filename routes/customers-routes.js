@@ -9,6 +9,7 @@ const {
   createCustomer,
   deleteCustomer,
   updateCustomer,
+  login,
 } = require("../controllers/customers-controllers");
 
 const auth = require("../middlewares/auth");
@@ -19,7 +20,15 @@ const passportAuth = passport.authenticate("jwt", { session: false });
 
 router.get("/", passportAuth, getAllCustomers);
 
-router.post("/", passportAuth, customerValidators.create, createCustomer);
+router.post(
+  "/",
+  passportAuth,
+  auth(),
+  customerValidators.create,
+  createCustomer
+);
+
+router.post("/login", login);
 
 router.get(
   "/:customerId",
@@ -31,12 +40,14 @@ router.get(
 router.delete(
   "/:customerId",
   passportAuth,
+  auth({ itemType: "customer" }),
   deleteCustomer
 );
 
 router.patch(
   "/:customerId",
   passportAuth,
+  auth({ itemType: "customer" }),
   customerValidators.update,
   updateCustomer
 );

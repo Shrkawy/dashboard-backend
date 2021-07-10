@@ -46,6 +46,7 @@ module.exports = checkSchema({
     normalizeEmail: {
       options: {
         all_lowercase: true,
+        gmail_remove_dots: false,
       },
     },
     errorMessage: "invalid email",

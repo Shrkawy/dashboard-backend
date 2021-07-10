@@ -71,6 +71,36 @@ exports.createCustomer = async (req, res, next) => {
   });
 };
 
+exports.login = async (req, res, next) => {
+  const email = req.body.email;
+
+  let customer, role;
+  try {
+    customer = await Customer.findOne({ email });
+    if (customer) role = await Role.findOne({ userId: customer._id });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong, please try again later.",
+    });
+  }
+
+  if (!customer || !role) {
+    return res.status(202).json({
+      success: false,
+      message: "email or password is wrong. try again!",
+    });
+  }
+
+  const token = issueJWT(customer, role);
+
+  return res.status(200).json({
+    customerName: `${customer.firstName} ${customer.lastName}`,
+    email: customer.email,
+    token,
+  });
+};
+
 exports.deleteCustomer = async (req, res, next) => {
   const id = req.params.customerId;
 

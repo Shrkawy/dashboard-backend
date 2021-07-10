@@ -13,16 +13,34 @@ const {
 
 const { orderValidators } = require("../middlewares/validators");
 
+const auth = require("../middlewares/auth");
+
 const passportAuth = passport.authenticate("jwt", { session: false });
 
-router.get("/", passportAuth, getAllOrders);
+router.get("/", passportAuth, auth(), getAllOrders);
 
-router.post("/", passportAuth, orderValidators.create, createOrder);
+router.post("/", passportAuth, auth(), orderValidators.create, createOrder);
 
-router.get("/:orderId", passportAuth, getOdrerById);
+router.get(
+  "/:orderId",
+  passportAuth,
+  auth({ itemType: "order" }),
+  getOdrerById
+);
 
-router.delete("/:orderId", passportAuth, deleteOrder);
+router.delete(
+  "/:orderId",
+  passportAuth,
+  auth({ itemType: "order" }),
+  deleteOrder
+);
 
-router.patch("/:orderId", passportAuth, orderValidators.update, updateOrder);
+router.patch(
+  "/:orderId",
+  passportAuth,
+  auth({ itemType: "order" }),
+  orderValidators.update,
+  updateOrder
+);
 
 module.exports = router;
