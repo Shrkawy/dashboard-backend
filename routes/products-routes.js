@@ -9,6 +9,7 @@ const {
   createProduct,
   deleteProduct,
   updateProduct,
+  deleteMultipleProducts,
 } = require("../controllers/products-controllers");
 
 const { productValidators } = require("../middlewares/validators");
@@ -20,6 +21,8 @@ const passportAuth = passport.authenticate("jwt", { session: false }),
 router.get("/", getAllProducts);
 
 router.post("/", passportAuth, auth(), productValidators.create, createProduct);
+
+router.delete("/", passportAuth, auth(), deleteMultipleProducts);
 
 router.get("/:productId", getProductById);
 

@@ -100,7 +100,6 @@ module.exports = function (restrict) {
         return next();
       }
 
-      console.log(req.params.customerId, role.userId.toString());
       if (req.params.customerId !== role.userId.toString())
         return res
           .status(403)

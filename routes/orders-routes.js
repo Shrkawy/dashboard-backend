@@ -9,6 +9,7 @@ const {
   createOrder,
   deleteOrder,
   updateOrder,
+  deleteMultipleOrders,
 } = require("../controllers/orders-controllers");
 
 const { orderValidators } = require("../middlewares/validators");
@@ -20,6 +21,8 @@ const passportAuth = passport.authenticate("jwt", { session: false });
 router.get("/", passportAuth, auth(), getAllOrders);
 
 router.post("/", passportAuth, auth(), orderValidators.create, createOrder);
+
+router.delete("/", passportAuth, auth(), deleteMultipleOrders);
 
 router.get(
   "/:orderId",

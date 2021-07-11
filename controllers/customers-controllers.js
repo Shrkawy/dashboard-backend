@@ -116,6 +116,55 @@ exports.deleteCustomer = async (req, res, next) => {
   return res.status(200).json("deleted");
 };
 
+exports.deleteMultipleCustomers = async (req, res, next) => {
+  const customerArr = req.body;
+
+  try {
+    const session = await startSession();
+    session.startTransaction();
+
+    for (const customerId of productsArr) {
+      let customer;
+      try {
+        customer = await Product.findByIdAndDelete(customerId, { session });
+      } catch (err) {
+        return res.status(500).json({
+          success: false,
+          message: "something went wrong, please try again later!",
+        });
+      }
+
+      if (!customer) {
+        await session.abortTransaction();
+        return res.status(202).json({
+          success: false,
+          message: "one of this customers not found",
+        });
+      }
+
+      if (customer.user.toString() !== req.role.userId.toString()) {
+        await session.abortTransaction();
+        return res.status(403).json({
+          success: false,
+          message: "you are not allowed",
+        });
+      }
+    }
+
+    if (session.inTransaction()) await session.commitTransaction();
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong, please try again later!",
+    });
+  }
+
+  return res.status(200).json({
+    message: "deleted successfully",
+    success: true,
+  });
+};
+
 exports.updateCustomer = async (req, res, next) => {
   // must check if at least one value exists to validate
   validationResult(req, res);

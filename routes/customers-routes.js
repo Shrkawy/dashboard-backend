@@ -10,6 +10,7 @@ const {
   deleteCustomer,
   updateCustomer,
   login,
+  deleteMultipleCustomers,
 } = require("../controllers/customers-controllers");
 
 const auth = require("../middlewares/auth");
@@ -27,6 +28,8 @@ router.post(
   customerValidators.create,
   createCustomer
 );
+
+router.delete("/", passportAuth, auth(), deleteMultipleCustomers);
 
 router.post("/login", login);
 

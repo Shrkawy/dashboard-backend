@@ -1,3 +1,4 @@
+const { startSession } = require("mongoose");
 const Order = require("../models/order");
 const Product = require("../models/product");
 const { validationResult } = require("../utils/validation");
@@ -46,53 +47,67 @@ exports.createOrder = async (req, res, next) => {
   const userId = req.params.userId;
   const customerId = req.params.customerId;
 
-  // check if products in order already exists and in stock !== 0
   // note* i need more check if the product is ordered multi times
-  const products = req.body.products;
-
-  for (const object of products) {
-    let existedProduct;
-    try {
-      existedProduct = await Product.findById(
-        object.product,
-        "productName stock"
-      );
-    } catch (err) {
-      return res.status(500).json({
-        message: "something went wrong, please try again later!",
-        success: false,
-      });
-    }
-
-    const { stock, productName } = existedProduct;
-
-    if (!existedProduct) {
-      return res.status(404).json({
-        message: "one or many of ordered products not found",
-        success: false,
-      });
-    }
-
-    if (object.number > stock) {
-      return res.status(202).json({
-        message:
-          stock === 0
-            ? `${productName} out of stock`
-            : `only ${stock} of ${productName} in stock`,
-        success: false,
-      });
-    }
-  }
 
   let createdOrder = new Order(req.body);
   createdOrder.user = userId;
   createdOrder.customer = customerId;
 
+  // check if products in order already exists and in stock !== 0
+  // if exists reduce stock by number of product in the order.
+  const products = req.body.products;
   let order;
   try {
-    order = await createdOrder.save();
+    const session = await startSession();
+    session.startTransaction();
+    for (const object of products) {
+      let existedProduct;
+      try {
+        existedProduct = await Product.findById(
+          object.product,
+          "productName stock",
+          { session }
+        );
+      } catch (err) {
+        await session.abortTransaction();
+        return res.status(500).json({
+          message: "something went wrong, please try again later!",
+          success: false,
+        });
+      }
+
+      console.log(existedProduct.productName);
+      const { stock, productName } = existedProduct;
+
+      if (!existedProduct) {
+        await session.abortTransaction();
+        return res.status(404).json({
+          message: "one or many of ordered products not found",
+          success: false,
+        });
+      }
+
+      if (object.number > stock) {
+        await session.abortTransaction();
+        return res.status(202).json({
+          message:
+            stock === 0
+              ? `${productName} out of stock`
+              : `only ${stock} of ${productName} in stock`,
+          success: false,
+        });
+      }
+
+      existedProduct.stock = stock - object.number;
+      await existedProduct.save({ session });
+    }
+    order = await createdOrder.save({ session });
+    await session.commitTransaction();
   } catch (err) {
-    return res.status(500).json(err);
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong, please try again later",
+    });
   }
 
   return res
@@ -114,6 +129,55 @@ exports.deleteOrder = async (req, res, next) => {
   return res
     .status(200)
     .json({ success: true, message: "deleted successfully" });
+};
+
+exports.deleteMultipleOrders = async (req, res, next) => {
+  const ordersArr = req.body;
+
+  try {
+    const session = await startSession();
+    session.startTransaction();
+
+    for (const orderId of productsArr) {
+      let order;
+      try {
+        order = await Order.findByIdAndDelete(orderId, { session });
+      } catch (err) {
+        return res.status(500).json({
+          success: false,
+          message: "something went wrong, please try again later!",
+        });
+      }
+
+      if (!order) {
+        await session.abortTransaction();
+        return res.status(202).json({
+          success: false,
+          message: "one of this orders not found",
+        });
+      }
+
+      if (order.user.toString() !== req.role.userId.toString()) {
+        await session.abortTransaction();
+        return res.status(403).json({
+          success: false,
+          message: "you are not allowed",
+        });
+      }
+    }
+
+    if (session.inTransaction()) await session.commitTransaction();
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong, please try again later!",
+    });
+  }
+
+  return res.status(200).json({
+    message: "deleted successfully",
+    success: true,
+  });
 };
 
 exports.updateOrder = async (req, res, next) => {
