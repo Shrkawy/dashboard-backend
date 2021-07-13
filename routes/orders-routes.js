@@ -4,7 +4,8 @@ const passport = require("passport");
 const router = Router({ mergeParams: true });
 
 const {
-  getAllOrders,
+  getAllCustomerOrders,
+  getAllUserOrders,
   getOdrerById,
   createOrder,
   deleteOrder,
@@ -18,28 +19,28 @@ const auth = require("../middlewares/auth");
 
 const passportAuth = passport.authenticate("jwt", { session: false });
 
-router.get("/", passportAuth, auth(), getAllOrders);
+router.get("/", passportAuth, auth(), getAllUserOrders);
 
 router.post("/", passportAuth, auth(), orderValidators.create, createOrder);
 
 router.delete("/", passportAuth, auth(), deleteMultipleOrders);
 
 router.get(
-  "/:orderId",
+  "/:customerId/:orderId",
   passportAuth,
   auth({ itemType: "order" }),
   getOdrerById
 );
 
 router.delete(
-  "/:orderId",
+  "/:customerId/:orderId",
   passportAuth,
   auth({ itemType: "order" }),
   deleteOrder
 );
 
 router.patch(
-  "/:orderId",
+  "/:customerId/:orderId",
   passportAuth,
   auth({ itemType: "order" }),
   orderValidators.update,

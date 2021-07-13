@@ -9,7 +9,10 @@ exports.getAllProducts = async (req, res, next) => {
 
   let products;
   try {
-    products = await Product.find({ user: userId });
+    products = await Product.find(
+      { user: userId },
+      "category price stock sold productName images"
+    );
   } catch (err) {
     return res.sendStatus(500);
   }
@@ -17,9 +20,10 @@ exports.getAllProducts = async (req, res, next) => {
   if (!products || products.length === 0)
     return res.status(202).json("no products found");
 
-  return res
-    .status(200)
-    .json(products.map((product) => product.toObject({ getters: true })));
+  return res.status(200).json({
+    success: true,
+    data: products.map((product) => product.toObject({ getters: true })),
+  });
 };
 
 exports.getProductById = async (req, res, next) => {

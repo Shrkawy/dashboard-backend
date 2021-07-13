@@ -22,7 +22,7 @@ app.use(passport.initialize());
 app.use("/api/", require("./routes/users-routes"));
 app.use("/api/:userId/products", require("./routes/products-routes"));
 app.use("/api/:userId/customers", require("./routes/customers-routes"));
-app.use("/api/:userId/:customerId/orders", require("./routes/orders-routes"));
+app.use("/api/:userId/orders", require("./routes/orders-routes"));
 
 // 404 error handler
 app.use((req, res, next) => {

@@ -18,13 +18,13 @@ const auth = require("../middlewares/auth");
 const passportAuth = passport.authenticate("jwt", { session: false }),
   itemType = "product";
 
-router.get("/", getAllProducts);
+router.get("/", passportAuth, auth(), getAllProducts);
 
 router.post("/", passportAuth, auth(), productValidators.create, createProduct);
 
 router.delete("/", passportAuth, auth(), deleteMultipleProducts);
 
-router.get("/:productId", getProductById);
+router.get("/:productId", passportAuth, auth({ itemType }), getProductById);
 
 router.delete("/:productId", passportAuth, auth({ itemType }), deleteProduct);
 

@@ -121,5 +121,14 @@ exports.login = async (req, res, next) => {
 
   if (!token) return res.sendStatus(500);
 
-  return res.status(200).json({ id: user.id, email: user.email, token });
+  return res
+    .status(200)
+    .json({
+      id: user.id,
+      username,
+      store: user.store,
+      email: user.email,
+      token,
+      success: true,
+    });
 };

@@ -3,7 +3,7 @@ const Order = require("../models/order");
 const Product = require("../models/product");
 const { validationResult } = require("../utils/validation");
 
-exports.getAllOrders = async (req, res, next) => {
+exports.getAllCustomerOrders = async (req, res, next) => {
   const customerId = req.params.customerId;
 
   let orders;
@@ -20,7 +20,38 @@ exports.getAllOrders = async (req, res, next) => {
   if (!orders || orders.length === 0)
     return res.status(202).json({ success: false, message: "no orders found" });
 
-  return res.status(200).json({ success: true, orders });
+  return res
+    .status(200)
+    .json({ success: true, orders: orders.toObject({ getters: true }) });
+};
+
+exports.getAllUserOrders = async (req, res, next) => {
+  const userId = req.params.userId;
+
+  let orders;
+
+  try {
+    orders = await Order.find({ user: userId })
+      .populate("customer", "firstName lastName")
+      .populate({
+        path: "products",
+        populate: "product",
+        select: "productName id",
+      });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "something went wrong, please try again later",
+    });
+  }
+
+  if (!orders || orders.length === 0)
+    return res.status(202).json({ success: false, message: "no orders found" });
+
+  return res.status(200).json({
+    success: true,
+    data: orders.map((order) => order.toObject({ getters: true })),
+  });
 };
 
 exports.getOdrerById = async (req, res, next) => {

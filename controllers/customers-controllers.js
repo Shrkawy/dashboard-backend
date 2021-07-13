@@ -11,7 +11,10 @@ exports.getAllCustomers = async (req, res, next) => {
 
   let customers;
   try {
-    customers = await Customer.find({ user: id });
+    customers = await Customer.find(
+      { user: id },
+      "firstName lastName country phone email"
+    );
   } catch (err) {
     return res.sendStatus(500);
   }
@@ -21,7 +24,10 @@ exports.getAllCustomers = async (req, res, next) => {
       .status(202)
       .json({ message: "no customers found!", success: false });
 
-  return res.status(200).json({ customers, success: true });
+  return res.status(200).json({
+    data: customers.map((customer) => customer.toObject({ getters: true })),
+    success: true,
+  });
 };
 
 exports.getCustomerById = async (req, res, next) => {
