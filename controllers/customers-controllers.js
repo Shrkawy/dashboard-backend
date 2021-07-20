@@ -43,7 +43,9 @@ exports.getCustomerById = async (req, res, next) => {
 
   if (!customer) return res.status(202).json("not found");
 
-  return res.status(200).json(customer);
+  return res
+    .status(200)
+    .json({ success: true, data: customer.toObject({ getters: true }) });
 };
 
 exports.createCustomer = async (req, res, next) => {

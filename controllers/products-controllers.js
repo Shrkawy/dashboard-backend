@@ -44,7 +44,9 @@ exports.getProductById = async (req, res, next) => {
       .status(202)
       .json({ success: false, message: "product not found" });
 
-  return res.status(200).json(product.toObject({ getters: true }));
+  return res
+    .status(200)
+    .json({ success: true, data: product.toObject({ getters: true }) });
 };
 
 exports.createProduct = async (req, res, next) => {
@@ -69,12 +71,22 @@ exports.deleteProduct = async (req, res, next) => {
   try {
     product = await Product.findByIdAndDelete(id);
   } catch (err) {
-    return res.sendStatus(500);
+    return res.status(500).json({
+      message: "internet server error, please try again!",
+      success: false,
+    });
   }
 
-  if (!product) return res.status(202).json("product not found");
+  if (!product)
+    return res.status(202).json({
+      message: "product not found",
+      success: false,
+    });
 
-  return res.status(200).json("deleted");
+  return res.status(200).json({
+    message: "deleted successfully",
+    success: true,
+  });
 };
 
 exports.deleteMultipleProducts = async (req, res, next) => {

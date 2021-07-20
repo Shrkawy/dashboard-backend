@@ -59,17 +59,22 @@ exports.getOdrerById = async (req, res, next) => {
 
   let order;
   try {
-    order = await Order.findById(id).populate({
-      path: "products",
-      populate: "product",
-    });
+    order = await Order.findById(id)
+      .populate({
+        path: "products",
+        populate: {
+          path: "product",
+          select: "productName price images",
+        },
+      })
+      .populate("customer", "id firstName lastName");
   } catch (err) {
     res.sendStatus(500);
   }
 
   if (!order) return res.status(202).json("Order not found!");
 
-  return res.status(200).json({ success: true, order });
+  return res.status(200).json({ success: true, data: order });
 };
 
 exports.createOrder = async (req, res, next) => {
@@ -107,7 +112,6 @@ exports.createOrder = async (req, res, next) => {
         });
       }
 
-      console.log(existedProduct.productName);
       const { stock, productName } = existedProduct;
 
       if (!existedProduct) {
