@@ -13,7 +13,7 @@ exports.getAllCustomers = async (req, res, next) => {
   try {
     customers = await Customer.find(
       { user: id },
-      "firstName lastName country phone email"
+      "firstName lastName country phone email spent"
     );
   } catch (err) {
     return res.sendStatus(500);

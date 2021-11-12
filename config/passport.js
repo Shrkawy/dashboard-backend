@@ -29,7 +29,7 @@ const userStrategy = new JwtStratigy(options, async (req, token, done) => {
       user = await User.findById(token.id);
     } catch (err) {
       return done(err, false, {
-        message: "something went wrong, please try again!",
+        message: "user not found!",
       });
     }
 
@@ -53,7 +53,7 @@ const userStrategy = new JwtStratigy(options, async (req, token, done) => {
       customer = await Customer.findById(token.id);
     } catch (err) {
       return done(err, false, {
-        message: "something went wrong, please try again!",
+        message: "customer not found!",
       });
     }
 

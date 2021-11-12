@@ -46,6 +46,10 @@ const customerSchema = new Schema(
       type: Number,
       required: true,
     },
+    spent: {
+      type: Number,
+      default: 0,
+    },
     cridetCard: { type: Object, required: false },
     user: { type: Schema.Types.ObjectId, ref: "User" },
   },

@@ -20,9 +20,16 @@ const auth = require("../middlewares/auth");
 const passportAuth = passport.authenticate("jwt", { session: false });
 
 router.get("/", passportAuth, auth(), getAllUserOrders);
-router.get("/:orderId", passportAuth, auth(), getOdrerById);
 
-router.post("/", passportAuth, auth(), orderValidators.create, createOrder);
+router.post(
+  "/:customerId",
+  passportAuth,
+  auth(),
+  orderValidators.create,
+  createOrder
+);
+
+router.get("/:orderId", passportAuth, auth(), getOdrerById);
 
 router.delete("/", passportAuth, auth(), deleteMultipleOrders);
 

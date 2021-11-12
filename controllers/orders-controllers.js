@@ -1,7 +1,9 @@
 const { startSession } = require("mongoose");
 const Order = require("../models/order");
 const Product = require("../models/product");
+const Customer = require("../models/customer");
 const { validationResult } = require("../utils/validation");
+const customer = require("../models/customer");
 
 exports.getAllCustomerOrders = async (req, res, next) => {
   const customerId = req.params.customerId;
@@ -92,7 +94,6 @@ exports.createOrder = async (req, res, next) => {
   // check if products in order already exists and in stock !== 0
   // if exists reduce stock by number of product in the order.
   const products = req.body.products;
-  let order;
   try {
     const session = await startSession();
     session.startTransaction();
@@ -104,39 +105,48 @@ exports.createOrder = async (req, res, next) => {
           "productName stock",
           { session }
         );
+        if (!existedProduct) {
+          await session.abortTransaction();
+          return res.status(404).json({
+            message: "one or many of ordered products not found",
+            success: false,
+          });
+        }
+
+        const { stock, productName } = existedProduct;
+
+        if (object.number > stock) {
+          await session.abortTransaction();
+          return res.status(202).json({
+            message:
+              stock === 0
+                ? `${productName} out of stock`
+                : `only ${stock} of ${productName} in stock`,
+            success: false,
+          });
+        }
+
+        existedProduct.stock = stock - object.number;
+        await existedProduct.save({ session });
       } catch (err) {
         await session.abortTransaction();
         return res.status(500).json({
-          message: "something went wrong, please try again later!",
+          message: "product not found!",
           success: false,
         });
       }
-
-      const { stock, productName } = existedProduct;
-
-      if (!existedProduct) {
-        await session.abortTransaction();
-        return res.status(404).json({
-          message: "one or many of ordered products not found",
-          success: false,
-        });
-      }
-
-      if (object.number > stock) {
-        await session.abortTransaction();
-        return res.status(202).json({
-          message:
-            stock === 0
-              ? `${productName} out of stock`
-              : `only ${stock} of ${productName} in stock`,
-          success: false,
-        });
-      }
-
-      existedProduct.stock = stock - object.number;
-      await existedProduct.save({ session });
     }
+
+    let order;
     order = await createdOrder.save({ session });
+
+    // increase customer spent amount
+    await Customer.updateOne(
+      { _id: customerId },
+      { $inc: { spent: createdOrder.finalPrice } },
+      { session }
+    );
+
     await session.commitTransaction();
   } catch (err) {
     return res.status(500).json({

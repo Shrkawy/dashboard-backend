@@ -9,10 +9,7 @@ exports.getAllProducts = async (req, res, next) => {
 
   let products;
   try {
-    products = await Product.find(
-      { user: userId },
-      "category price stock sold productName images"
-    );
+    products = await Product.find({ user: userId });
   } catch (err) {
     return res.sendStatus(500);
   }
