@@ -1,8 +1,10 @@
 const { connect } = require("mongoose");
 const { success, error, ready } = require("consola");
 
-const PORT = process.env.PORT || 8080;
+const PORT = parseInt(process.env.PORT) || 8080;
+
 const { DB_USER: user, DB_PASSWORD: pass, DB_NAME: name } = process.env;
+
 const DB_URL = `mongodb+srv://${user}:${pass}@cluster0.5jwjv.mongodb.net/${name}?retryWrites=true&w=majority`;
 /**
  * @param listen pass app.listen

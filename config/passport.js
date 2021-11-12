@@ -1,4 +1,4 @@
-const JwtStratigy = require("passport-jwt").Strategy;
+const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const Role = require("../models/role");
 
@@ -8,7 +8,7 @@ const options = {
   passReqToCallback: true,
 };
 
-const userStrategy = new JwtStratigy(options, async (req, token, done) => {
+const userStrategy = new JwtStrategy(options, async (req, token, done) => {
   let role;
 
   try {

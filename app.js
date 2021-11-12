@@ -4,6 +4,8 @@ const express = require("express"),
   passport = require("passport"),
   { join } = require("path");
 
+require("dotenv").config();
+
 // config passport
 require("./config/passport")(passport);
 
